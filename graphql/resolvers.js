@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 require('dotenv').config();
 const User = require('../models/user');
-const Service = require('../models/service');
+const Service = require('../models/newservice');
 const Website = require('../models/website');
 const Appointment = require('../models/Appointment');
 const Portfolio = require('../models/PortfolioViews');
