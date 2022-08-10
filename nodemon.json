@@ -1,0 +1,6 @@
+{
+  "env": {
+    "DB_CONNECTION": "mongodb+srv://admin-jovani:ldFCAOXshKPF8xHf@personalweb.sdrgcap.mongodb.net/?retryWrites=true&w=majority",
+    "JWT_SECRET": "rk-5-162387% "
+  }
+}
