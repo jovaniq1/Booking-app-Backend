@@ -151,9 +151,9 @@ module.exports = buildSchema(`
         portfolio: ExampleResponse
         userInfo: User!
         getCustomers: CustomersData!
-        appointments(page: Int, websiteId:ID): AppointmentData!
+        appointments(page: Int): AppointmentData!
         appointment(id:ID!): Appointment!
-        getWebsite(domain: String!): GetWebsiteData!
+        getWebsite(domain: String): GetWebsiteData!
     }
     type RootMutation {
         createUser(userInput: UserInputData): AuthData!

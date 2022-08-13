@@ -295,7 +295,7 @@ module.exports = {
     throw error;
   },
   //takes page and website ID
-  appointments: async function ({ page, websiteId }, req, next) {
+  appointments: async function ({ page }, req, next) {
     //console.log('----------user', user.username);
     isAuth(req.isAuth);
     const user = await User.findById(req.userId);
@@ -331,8 +331,11 @@ module.exports = {
       }).countDocuments();
     }
     if (user.role === 'admin') {
+      website = await Website.find({
+        admin: user._id,
+      });
       appointments = await Appointment.find({
-        website: websiteId,
+        website: website._id,
       })
         .populate('creator')
         .populate('customer')
@@ -340,7 +343,7 @@ module.exports = {
         .populate('service');
 
       totalAppointments = await Appointment.find({
-        website: websiteId,
+        website: website._id,
       }).countDocuments();
     }
 
@@ -451,11 +454,31 @@ module.exports = {
   },
   getWebsite: async function ({ domain }, req, next) {
     // converts string id to mongoose id
-    const website = await Website.findOne({
-      domain,
-    })
-      .populate('customers')
-      .populate('staff');
+    const user = await User.findById(req.userId);
+    let website;
+
+    if (user.role === 'admin') {
+      website = await Website.findOne({
+        admin: user._id,
+      })
+        .populate('customers')
+        .populate('staff');
+    }
+
+    if (user.role === 'staff') {
+      website = await Website.findOne({
+        staff: req.userId,
+      })
+        .populate('customers')
+        .populate('staff');
+      console.log('sstaff website', website);
+    } else {
+      website = await Website.findOne({
+        domain,
+      })
+        .populate('customers')
+        .populate('staff');
+    }
 
     if (!website) {
       const error = new error('Website not Found!');
