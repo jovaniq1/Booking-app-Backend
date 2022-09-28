@@ -1,29 +1,26 @@
 const Sequelize = require('sequelize').Sequelize;
+const fs = require('fs');
+const path = require('path');
 
-const sequelize = new Sequelize('workoutStats', 'root', '123456', {
-  host: '35.224.159.246',
-  dialect: 'mysql',
-  port: 3306,
-  define: {
-    charset: 'utf8mb4',
-    // collate: 'utf8mb4_unicode_ci'
-  },
-  dialectOptions: {
-    ssl: {
-      require: false,
-      rejectUnauthorized: false, // <<<<<<< YOU NEED THIS
+const sequelize = new Sequelize(
+  'workoutStats',
+  'root',
+  process.env.MYSQL_PASSWORD,
+  {
+    host: process.env.MYSQL_HOST,
+    dialect: 'mysql',
+    port: 3306,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        key: fs.readFileSync(__dirname + '/certs/client-key.pem'),
+        cert: fs.readFileSync(__dirname + '/certs/client-cert.pem'),
+        ca: fs.readFileSync(__dirname + '/certs/server-ca.pem'),
+      },
     },
-  },
-  logging: false,
-  pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
-    idle: 10000,
-  },
-});
+  }
+);
 
-console.log('---process.env', process.env);
 sequelize
   .authenticate()
   .then(() => {
