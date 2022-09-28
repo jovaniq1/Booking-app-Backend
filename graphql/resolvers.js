@@ -631,7 +631,6 @@ module.exports = {
     const errors = [];
     console.log('------test');
     const user = await WorkoutUser.findOne({ where: { email } });
-    console.log('user===', user);
 
     if (!user) {
       const error = new Error('User not found!');
@@ -827,7 +826,6 @@ module.exports = {
     let data = [];
     const exercisesData = [];
 
-   
     let exerciseData = [];
     for (let i = 0; i < categories.length; i++) {
       let exercises = await Exercise.findAll({
@@ -856,7 +854,7 @@ module.exports = {
       });
       if (set) {
         set.map((item) => {
-        //  console.log('---category----', item?.exercise?.category);
+          //  console.log('---category----', item?.exercise?.category);
           setData.push(item);
         });
       }
@@ -889,7 +887,7 @@ module.exports = {
     // const response = await Promise.allSettled(promises);
     // console.log(response);
     // let datatest = await getDataSets();
-  
+
     return {
       sets: setData.map((set) => {
         return {
