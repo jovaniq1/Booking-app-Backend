@@ -9,7 +9,10 @@ const sequelize = new Sequelize('workoutStats', 'root', '123456', {
     // collate: 'utf8mb4_unicode_ci'
   },
   dialectOptions: {
-    charset: 'utf8mb4',
+    ssl: {
+      require: true,
+      rejectUnauthorized: false, // <<<<<<< YOU NEED THIS
+    },
   },
   logging: false,
   pool: {
