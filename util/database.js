@@ -10,39 +10,39 @@ const sequelize = new Sequelize(
     host: process.env.MYSQL_HOST,
     dialect: 'mysql',
     port: 3306,
-    retry: {
-      match: [
-        /ETIMEDOUT/,
-        /EHOSTUNREACH/,
-        /ECONNRESET/,
-        /ECONNREFUSED/,
-        /ETIMEDOUT/,
-        /ESOCKETTIMEDOUT/,
-        /EHOSTUNREACH/,
-        /EPIPE/,
-        /EAI_AGAIN/,
-        /SequelizeConnectionError/,
-        /SequelizeConnectionRefusedError/,
-        /SequelizeHostNotFoundError/,
-        /SequelizeHostNotReachableError/,
-        /SequelizeInvalidConnectionError/,
-        /SequelizeConnectionTimedOutError/,
-      ],
-      max: 5,
-    },
-    dialectOptions: {
-      ssl: {
-        require: true,
-        key: fs.readFileSync(__dirname + '/certs/client-key.pem'),
-        cert: fs.readFileSync(__dirname + '/certs/client-cert.pem'),
-        ca: fs.readFileSync(__dirname + '/certs/server-ca.pem'),
-      },
-    },
-    pool: {
-      max: 5,
-      min: 0,
-      idle: 1, // Keep this very low or it'll make all Lambda requests take longer
-    },
+    // retry: {
+    //   match: [
+    //     /ETIMEDOUT/,
+    //     /EHOSTUNREACH/,
+    //     /ECONNRESET/,
+    //     /ECONNREFUSED/,
+    //     /ETIMEDOUT/,
+    //     /ESOCKETTIMEDOUT/,
+    //     /EHOSTUNREACH/,
+    //     /EPIPE/,
+    //     /EAI_AGAIN/,
+    //     /SequelizeConnectionError/,
+    //     /SequelizeConnectionRefusedError/,
+    //     /SequelizeHostNotFoundError/,
+    //     /SequelizeHostNotReachableError/,
+    //     /SequelizeInvalidConnectionError/,
+    //     /SequelizeConnectionTimedOutError/,
+    //   ],
+    //   max: 5,
+    // },
+    // dialectOptions: {
+    //   ssl: {
+    //     require: true,
+    //     key: fs.readFileSync(__dirname + '/certs/client-key.pem'),
+    //     cert: fs.readFileSync(__dirname + '/certs/client-cert.pem'),
+    //     ca: fs.readFileSync(__dirname + '/certs/server-ca.pem'),
+    //   },
+    // },
+    // pool: {
+    //   max: 5,
+    //   min: 0,
+    //   idle: 1, // Keep this very low or it'll make all Lambda requests take longer
+    // },
   }
 );
 
