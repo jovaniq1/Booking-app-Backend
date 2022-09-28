@@ -8,6 +8,11 @@ const Service = require('../models/newservice');
 const Website = require('../models/website');
 const Appointment = require('../models/Appointment');
 const Portfolio = require('../models/PortfolioViews');
+const Staff = require('../models/Staff');
+const WorkoutUser = require('../models/workoutStats/user');
+const Sets = require('../models/workoutStats/sets');
+const Exercise = require('../models/workoutStats/exercise');
+const Category = require('../models/workoutStats/categories');
 //test
 const isAuth = (isAuth) => {
   const Errors = [];
@@ -62,11 +67,17 @@ module.exports = {
       password: hashedPw,
     });
     const createdUser = await user.save();
+
     if (createdUser.role === 'staff') {
       const websiteId = mongoose.Types.ObjectId(userInput.website);
       const website = await Website.findById(websiteId);
       website.staff = [...website.staff, createdUser._id];
       await website.save();
+      const staff = new Staff({
+        staffInfo: createdUser._id,
+        website: websiteId,
+      });
+      const createdStaff = await staff.save();
     }
 
     const token = jwt.sign(
@@ -289,6 +300,44 @@ module.exports = {
       }
 
       return { ...user._doc, _id: user._id.toString() };
+    }
+    const error = new error('Not Valid credentials');
+    error.code = 401;
+    throw error;
+  },
+  UpdateStaff: async function ({ offerServices, schedule }, req, next) {
+    console.log('test', offerServices);
+
+    isAuth(req.isAuth);
+    const errors = [];
+    if (req.isAuth) {
+      const user = await User.findById(req.userId);
+      const staff = await Staff.find({
+        staffInfo: req.userId,
+      })
+        .populate('staffInfo')
+        .populate('website')
+        .populate('offerServices')
+        .populate('currentAppointments');
+      console.log('---staff', staff);
+      if (!user) {
+        const error = new error('invalid User');
+        error.code = 401;
+        throw error;
+      }
+      if (!staff) {
+        const error = new error('invalid Staff');
+        error.code = 401;
+        throw error;
+      }
+
+      staff.offerServices = services !== undefined && [
+        ...staff.offerServices,
+        offerServices,
+      ];
+      staff.schedule = schedule !== undefined && schedule;
+
+      return { ...staff._doc, _id: staff._id.toString() };
     }
     const error = new error('Not Valid credentials');
     error.code = 401;
@@ -521,6 +570,349 @@ module.exports = {
           _id: service._id.toString(),
           website: service.website.toString(),
           dateCreated: service.dateCreated.toISOString(),
+        };
+      }),
+    };
+  },
+  // everything related to workout stats app
+  createWorkoutUser: async function ({ userInput }) {
+    const errors = [];
+    const { firstname, password, email, lastname } = userInput;
+
+    if (!validator.isEmail(email)) {
+      errors.push({ message: 'E-Mail is invalid.' });
+    }
+    if (
+      validator.isEmpty(userInput.password) ||
+      !validator.isLength(password, { min: 4 })
+    ) {
+      errors.push({ message: 'Password too short!' });
+    }
+
+    const existingUserEmail = await WorkoutUser.findOne({
+      where: { email: email },
+    });
+
+    if (existingUserEmail) {
+      const error = new Error('Email already has an account!');
+      throw error;
+    }
+    const hashedPw = await bcrypt.hash(password, 12);
+
+    const createdUser = await WorkoutUser.create({
+      firstname: firstname,
+      lastname: lastname,
+      password: hashedPw,
+      email: email,
+    });
+
+    const token = jwt.sign(
+      {
+        userId: createdUser.id.toString(),
+        email: createdUser.email,
+      },
+      process.env.JWT_SECRET
+    );
+
+    return {
+      token: token,
+      userInfo: {
+        id: createdUser.id,
+        email: createdUser.email,
+        password: createdUser.password,
+        firstname: createdUser.firstname,
+        lastname: createdUser.lastname,
+        createdAt: createdUser.createdAt.toISOString(),
+        updatedAt: createdUser.updatedAt.toISOString(),
+      },
+    };
+  },
+  workoutLogin: async function ({ email, password }) {
+    const errors = [];
+    console.log('------test');
+    const user = await WorkoutUser.findOne({ where: { email } });
+    console.log('user===', user);
+
+    if (!user) {
+      const error = new Error('User not found!');
+      throw error;
+    }
+
+    const isEqual = await bcrypt.compare(password, user.password);
+    if (!isEqual) {
+      const error = new Error('Password is incorrect.');
+      error.code = 401;
+      throw error;
+    }
+
+    const token = jwt.sign(
+      {
+        userId: user.id.toString(),
+        email: user.email,
+      },
+      process.env.JWT_SECRET
+    );
+    return {
+      token: token,
+      userInfo: {
+        id: user.id,
+        email: user.email,
+        password: user.password,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+      },
+    };
+  },
+  createCategory: async function ({ name }, req, next) {
+    isAuth(req.isAuth);
+    const errors = [];
+
+    const existingCategory = await Category.findOne({
+      where: {
+        name: name,
+        userId: req.userId,
+      },
+    });
+
+    if (existingCategory) {
+      const error = new Error('Category Already Added!');
+      throw error;
+    }
+    const category = await Category.create({
+      name,
+      userId: req.userId,
+    });
+
+    return {
+      id: category.id,
+      name: category.name,
+      createdAt: category.createdAt.toISOString(),
+      updatedAt: category.updatedAt.toISOString(),
+    };
+  },
+  createExercise: async function ({ name, categoryId }, req) {
+    isAuth(req.isAuth);
+    const errors = [];
+
+    const existingExercise = await Exercise.findOne({
+      where: {
+        name: name,
+        categoryId: categoryId,
+      },
+    });
+
+    if (existingExercise) {
+      const error = new Error('Exercise Already Added!');
+      throw error;
+    }
+    const exercise = await Exercise.create({
+      name,
+      categoryId,
+    });
+
+    return {
+      id: exercise.id,
+      categoryId: exercise.categoryId,
+      name: exercise.name,
+      createdAt: exercise.createdAt.toISOString(),
+      updatedAt: exercise.updatedAt.toISOString(),
+    };
+  },
+  createSets: async function ({ reps, weight, exerciseId }, req) {
+    isAuth(req.isAuth);
+    const errors = [];
+
+    const set = await Sets.create({
+      reps,
+      weight,
+      exerciseId,
+    });
+
+    return {
+      id: set.id,
+      exerciseId: set.exerciseId,
+      reps: set.reps,
+      weight: set.weight,
+      createdAt: set.createdAt.toISOString(),
+      updatedAt: set.updatedAt.toISOString(),
+    };
+  },
+  getCategories: async function (res, req) {
+    isAuth(req.isAuth);
+    const errors = [];
+
+    const categories = await Category.findAll({
+      where: {
+        userId: req.userId,
+      },
+    });
+
+    return {
+      categories: categories.map((category) => {
+        return {
+          id: category.id,
+          name: category.name,
+          createdAt: category.createdAt.toISOString(),
+          updatedAt: category.updatedAt.toISOString(),
+        };
+      }),
+    };
+  },
+  getExercises: async function ({ categoryId }, req) {
+    isAuth(req.isAuth);
+    const errors = [];
+
+    const exercises = await Exercise.findAll({
+      where: {
+        categoryId: categoryId,
+      },
+    });
+    console.log('categories', exercises);
+
+    return {
+      exercises: exercises.map((exercise) => {
+        return {
+          id: exercise.id,
+          name: exercise.name,
+          categoryId: exercise.categoryId,
+          createdAt: exercise.createdAt.toISOString(),
+          updatedAt: exercise.updatedAt.toISOString(),
+        };
+      }),
+    };
+  },
+  getSets: async function ({ exerciseId }, req) {
+    isAuth(req.isAuth);
+    const errors = [];
+
+    const sets = await Sets.findAll({
+      where: {
+        exerciseId,
+      },
+    });
+
+    return {
+      sets: sets.map((set) => {
+        return {
+          id: set.id,
+          exerciseId: set.exerciseId,
+          reps: set.reps,
+          weight: set.weight,
+          createdAt: set.createdAt.toISOString(),
+          updatedAt: set.updatedAt.toISOString(),
+        };
+      }),
+    };
+  },
+  getAllSets: async function (res, req) {
+    isAuth(req.isAuth);
+    const errors = [];
+
+    const test = await Category.findAll({
+      where: { userId: req.userId },
+      include: [
+        {
+          model: WorkoutUser,
+        },
+      ],
+    });
+
+    const categories = await Category.findAll({
+      where: {
+        userId: req.userId,
+      },
+    });
+    let data = [];
+    const exercisesData = [];
+
+   
+    let exerciseData = [];
+    for (let i = 0; i < categories.length; i++) {
+      let exercises = await Exercise.findAll({
+        where: {
+          categoryId: categories[i]?.id,
+        },
+      });
+      if (exercises) {
+        exercises.map((item) => {
+          exerciseData.push(item);
+        });
+      }
+    }
+    let setData = [];
+    for (let i = 0; i < exerciseData.length; i++) {
+      let set = await Sets.findAll({
+        where: {
+          exerciseId: exerciseData[i]?.id,
+        },
+        include: [
+          {
+            model: Exercise,
+            include: [Category],
+          },
+        ],
+      });
+      if (set) {
+        set.map((item) => {
+        //  console.log('---category----', item?.exercise?.category);
+          setData.push(item);
+        });
+      }
+    }
+    // const getDataSets = async () => {
+    //   categories.map(async (category) => {
+    //     const exercises = await Exercise.findAll({
+    //       where: {
+    //         categoryId: category?.id,
+    //       },
+    //     });
+
+    //     exercises.map(async (exercise) => {
+    //       let set = await Sets.findAll({
+    //         where: {
+    //           exerciseId: exercise?.id,
+    //         },
+    //       });
+    //       if (set) {
+    //         set.map((item) => {
+    //           data.push(item);
+    //         });
+    //       }
+    //     });
+    //   });
+    //   return data;
+    // };
+
+    // const promises = [getAllExercises(categories)];
+    // const response = await Promise.allSettled(promises);
+    // console.log(response);
+    // let datatest = await getDataSets();
+  
+    return {
+      sets: setData.map((set) => {
+        return {
+          id: set.id,
+          exerciseId: set.exerciseId,
+          exercise: {
+            id: set.exercise?.id,
+            name: set.exercise?.name,
+            category: {
+              id: set?.exercise?.category.id,
+              name: set?.exercise?.category.name,
+              createdAt: set?.exercise?.category.createdAt.toISOString(),
+              updatedAt: set?.exercise?.category.updatedAt.toISOString(),
+            },
+            categoryId: set.exercise?.categoryId,
+            createdAt: set.exercise?.createdAt.toISOString(),
+            updatedAt: set.exercise?.updatedAt.toISOString(),
+          },
+
+          reps: set.reps,
+          weight: set.weight,
+          createdAt: set.createdAt.toISOString(),
+          updatedAt: set.updatedAt.toISOString(),
         };
       }),
     };

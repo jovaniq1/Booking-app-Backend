@@ -10,10 +10,31 @@ const compression = require('compression');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
 const connectMongo = require('./util/dbConnect');
+const sequelize = require('./util/database');
+const Sequelize = require('sequelize');
+const User = require('./models/workoutStats/user');
+const Sets = require('./models/workoutStats/sets');
+const Exercise = require('./models/workoutStats/exercise');
+const Category = require('./models/workoutStats/categories');
 const auth = require('./middleware/auth');
 const app = express();
 
 app.get('/', (req, res) => res.send('Hello World!'));
+
+Category.belongsTo(User, { constraints: true, onDelete: 'CASCADE' });
+User.hasMany(Category);
+
+Exercise.belongsTo(Category, { constraints: true, onDelete: 'CASCADE' });
+Category.hasMany(Exercise);
+
+Sets.belongsTo(Exercise, { constraints: true, onDelete: 'CASCADE' });
+Exercise.hasMany(Sets);
+sequelize
+  .sync({ force: false })
+  .then((result) => {
+    console.log(result);
+  })
+  .catch((err) => console.log(err));
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {

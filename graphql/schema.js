@@ -2,14 +2,73 @@ const { buildSchema } = require('graphql');
 
 module.exports = buildSchema(`
 
-    type Post {
-        _id: ID!
-        title: String!
-        content: String!
-        imageUrl: String!
-        creator: User!
-        createdAt: String!
-        updatedAt: String!
+
+
+    type WorkoutUser {
+        id: Int!
+        email: String!
+        firstname: String
+        lastname: String
+        password: String
+        createdAt: String
+        updatedAt: String
+    }
+    type Category {
+        id: Int!
+        userId: Int!
+        name: String!
+        createdAt: String
+        updatedAt: String
+    }
+    type Set {
+        id: Int!
+        reps: Int!
+        weight: String!
+        exerciseId: Int!
+        createdAt: String
+        updatedAt: String
+    }
+   
+    type Exercise {
+        id: Int!
+        categoryId: Int!
+        name: String
+        createdAt: String
+        updatedAt: String
+    }
+    type AllExercise {
+        id: Int!
+        categoryId: Int!
+        category:Category
+        name: String
+        createdAt: String
+        updatedAt: String
+    }
+    type AllSets {
+        id: Int!
+        reps: Int!
+        weight: String!
+        exercise: AllExercise
+        createdAt: String
+        updatedAt: String
+    }
+    type AllSetsData{
+        sets: [AllSets]
+    }
+    
+   
+    type WorkoutAuthData {
+        token: String!
+        userInfo: WorkoutUser!
+    }
+    type GetCategories{
+        categories:[Category]
+    }
+    type GetExercises{
+        exercises:[Exercise]
+    }
+    type GetSets{
+        sets:[Set]
     }
 
     type User {
@@ -23,6 +82,13 @@ module.exports = buildSchema(`
         role: String
         date: String
         appointments: [Appointment!]!
+    }
+    type Staff {
+        _id: ID!
+        offerServices: [Service]
+        website: ID!
+        schedule: String
+        currentAppointments: [Appointment]
     }
     type Appointment {
         _id: ID!
@@ -109,6 +175,13 @@ module.exports = buildSchema(`
         phone: String!
         role: String
     }
+    input UserInputDataWorkout {
+        email: String!
+        firstname: String!
+        lastname: String!
+        password: String!
+      
+    }
     input NewService {
         serviceName: String!
         description: String!
@@ -146,6 +219,11 @@ module.exports = buildSchema(`
       }
 
     type RootQuery {
+        workoutLogin(email: String!, password: String!): WorkoutAuthData!
+        getCategories: GetCategories!
+        getExercises(categoryId: ID!): GetExercises!
+        getSets(exerciseId: ID!): GetSets!
+        getAllSets: AllSetsData!
         login(username: String!, password: String!): AuthData!
         greet: ExampleResponse
         portfolio: ExampleResponse
@@ -156,11 +234,16 @@ module.exports = buildSchema(`
         getWebsite(domain: String): GetWebsiteData!
     }
     type RootMutation {
+        createWorkoutUser(userInput: UserInputDataWorkout): WorkoutAuthData!
+        createCategory(name: String!): Category!
+        createExercise(name: String!, categoryId: ID!): Exercise!
+        createSets(reps: String!,weight: String!, exerciseId: ID!): Set!
         createUser(userInput: UserInputData): AuthData!
         createWebsite(userInput: NewWebsiteData): CreateWebsiteResponse!
         createService(userInput: NewServiceData): Service!
         createAppointment(AppointmentInput: AppointmentInputData): Appointment!
         updateAppointment(id: ID!, AppointmentInput: AppointmentInputData): Appointment!
+        updateStaff(offerServices: ID, schedule: String): Staff!
     }
 
     schema {
