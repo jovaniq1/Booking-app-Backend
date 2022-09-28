@@ -10,7 +10,7 @@ const sequelize = new Sequelize('workoutStats', 'root', '123456', {
   },
   dialectOptions: {
     ssl: {
-      require: true,
+      require: false,
       rejectUnauthorized: false, // <<<<<<< YOU NEED THIS
     },
   },
