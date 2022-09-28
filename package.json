@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "DB_CONNECTION=mongodb+srv://admin-jovani:ldFCAOXshKPF8xHf@personalweb.sdrgcap.mongodb.net/?retryWrites=true&w=majority JWT_SECRET=rk-5-162387% node app.js",
+    "start": "MYSQL_HOST=35.224.159.246 MYSQL_PASSWORD=123456  DB_CONNECTION=mongodb+srv://admin-jovani:ldFCAOXshKPF8xHf@personalweb.sdrgcap.mongodb.net/?retryWrites=true&w=majority JWT_SECRET=rk-5-162387% node app.js",
     "start-server": "node app.js",
     "start:dev": "nodemon app.js"
   },

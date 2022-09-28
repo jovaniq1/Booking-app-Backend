@@ -34,7 +34,7 @@ sequelize
   .then((result) => {
     console.log(result);
   })
-  .catch((err) => console.log(err));
+  .catch((err) => console.log('issue', err));
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
