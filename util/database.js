@@ -18,6 +18,11 @@ const sequelize = new Sequelize(
         ca: fs.readFileSync(__dirname + '/certs/server-ca.pem'),
       },
     },
+    pool: {
+      max: 5,
+      min: 0,
+      idle: 1, // Keep this very low or it'll make all Lambda requests take longer
+    },
   }
 );
 
